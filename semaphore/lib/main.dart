@@ -26,20 +26,13 @@ class MyApp extends StatelessWidget {
             return BlocBuilder<TestBloc, TestState>(
             builder: (context, state){
               return Stack(children: [
-                Positioned(top: 100, child: Slider(min: -180, max: 180, value: state.angle, onChanged: (angle) =>BlocProvider.of<TestBloc>(context).add(ChangeAngleEvent(angle),))),
-                // Center(
-                //     child: Image.asset(
-                //       "assets/images/Person.png",
-                //       width: 150,
-                //       height: 300,
-                //     )),
                 Container(
                     child: Center(
                         child: Container(
                           width: 150,
                           height: 300,
                           child: CustomPaint(
-                            painter: SimpleSignalPainter(AlphabeticalSignal.a.signal, state.angle),
+                            painter: SimpleSignalPainter(AlphabeticalSignal.h.signal, state.angle),
                           ),
                         ))),
               ]);

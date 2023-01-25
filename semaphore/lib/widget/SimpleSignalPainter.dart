@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:semaphore/classes/simple_signal.dart';
+import 'package:semaphore/enum/hand_position.dart';
 
 class SimpleSignalPainter extends CustomPainter {
   final SimpleSignal signal;
@@ -21,8 +22,7 @@ class SimpleSignalPainter extends CustomPainter {
     double armWidth = 22;
     double shoulderHeight = 23;
 
-    double rightArmAngle = angle / 180 * pi;
-
+    
     Paint personFill = Paint();
     personFill.style = PaintingStyle.fill;
     personFill.color = Colors.black;
@@ -70,73 +70,108 @@ class SimpleSignalPainter extends CustomPainter {
     path.relativeLineTo(0, -legLength);
     //Draw left leg gap
     path.relativeLineTo(legGap/2, 0);
-    //TODO round shoulders
 
+    //Draw main body to canvas
     canvas.drawPath(path, personFill);
 
-    Offset topRightShoulder = Offset(size.width/2, size.height/2 + 22)  - Offset(-legGap/2 - legWidth, torsoLength + shoulderHeight);
-    Offset bottomRightShoulder = Offset(size.width/2, size.height/2 + 22)  - Offset(-legGap/2 - legWidth, torsoLength);
-    Offset rightRotationPoint = (bottomRightShoulder) + Offset(shoulderHeight/2 + 5 , -shoulderHeight/2);
+    //Get left hand angle
+    double leftArmAngle = signal.left.handPositionAngle + pi;
 
-    Offset rightArmBase = rightRotationPoint + Offset(2*shoulderHeight/3 * cos(rightArmAngle), 2*shoulderHeight/3 * sin(rightArmAngle));
-    Offset rightInsideArmBase = rightArmBase + Offset(armWidth/2 * cos(pi/2 + rightArmAngle), armWidth/2 * sin(pi/2 + rightArmAngle));
-    Offset rightOutsideArmBase = rightArmBase + Offset(armWidth/2 * cos(-pi/2 + rightArmAngle), armWidth/2 * sin(-pi/2 + rightArmAngle));
-
-    Path rightArm = Path();
-    rightArm.moveTo(bottomRightShoulder.dx, bottomRightShoulder.dy);
-
-    rightArm.quadraticBezierTo(getXIntersect(bottomRightShoulder, rightInsideArmBase, rightInsideArmBase + Offset(armLength * cos(rightArmAngle), armLength * sin(rightArmAngle))), bottomRightShoulder.dy, rightInsideArmBase.dx, rightInsideArmBase.dy);
-
-    rightArm.relativeLineTo(armLength * cos(rightArmAngle), armLength * sin(rightArmAngle));
-    rightArm.relativeArcToPoint(rightOutsideArmBase - rightInsideArmBase, radius: Radius.circular(armWidth /2), clockwise: false);
-    rightArm.relativeLineTo(-armLength * cos(rightArmAngle), -armLength * sin(rightArmAngle));
-    rightArm.quadraticBezierTo(getXIntersect(topRightShoulder, rightOutsideArmBase, rightOutsideArmBase + Offset(armLength * cos(rightArmAngle), armLength * sin(rightArmAngle)) ), topRightShoulder.dy, topRightShoulder.dx, topRightShoulder.dy);
-    rightArm.relativeLineTo(0, shoulderHeight);
-
-    Path rightArmStroke = Path();
-    rightArmStroke.moveTo(rightInsideArmBase.dx + armLength * .2 * cos(rightArmAngle), rightInsideArmBase.dy + .2 * armLength * sin(rightArmAngle));
-    rightArmStroke.relativeLineTo(.8* armLength * cos(rightArmAngle), .8 * armLength * sin(rightArmAngle));
-    rightArmStroke.relativeArcToPoint(rightOutsideArmBase - rightInsideArmBase, radius: Radius.circular(armWidth /2), clockwise: false);
-    rightArmStroke.relativeLineTo(-0.8 * armLength * cos(rightArmAngle), -0.8 * armLength * sin(rightArmAngle));
-
-    //Left Arm
-    double leftArmAngle = pi + rightArmAngle;
-
-    Offset topLeftShoulder = Offset(size.width/2, size.height/2 + 22)  + Offset(-legGap/2 - legWidth, -torsoLength - shoulderHeight);
-    Offset bottomLeftShoulder = Offset(size.width/2, size.height/2 + 22)  + Offset(-legGap/2 - legWidth, -torsoLength);
-    Offset leftRotationPoint = (bottomLeftShoulder) + Offset(-shoulderHeight/2 - 5 , -shoulderHeight/2);
-
+    //Calculate rotation point and base shoulder points
+    Offset topLeftShoulder = Offset(size.width/2, size.height/2 + 22)  - Offset(-legGap/2 - legWidth, torsoLength + shoulderHeight);
+    Offset bottomLeftShoulder = Offset(size.width/2, size.height/2 + 22)  - Offset(-legGap/2 - legWidth, torsoLength);
+    Offset leftRotationPoint = (bottomLeftShoulder) + Offset(shoulderHeight/2 + 5 , -shoulderHeight/2);
+    //Calculate base arm points by rotating as necessary
     Offset leftArmBase = leftRotationPoint + Offset(2*shoulderHeight/3 * cos(leftArmAngle), 2*shoulderHeight/3 * sin(leftArmAngle));
-    Offset leftInsideArmBase = leftArmBase + Offset(armWidth/2 * cos(-pi/2 + leftArmAngle), armWidth/2 * sin(-pi/2 + leftArmAngle));
-    Offset leftOutsideArmBase = leftArmBase + Offset(armWidth/2 * cos(pi/2 + leftArmAngle), armWidth/2 * sin(pi/2 + leftArmAngle));
-
+    Offset leftInsideArmBase = leftArmBase + Offset(armWidth/2 * cos(pi/2 + leftArmAngle), armWidth/2 * sin(pi/2 + leftArmAngle));
+    Offset leftOutsideArmBase = leftArmBase + Offset(armWidth/2 * cos(-pi/2 + leftArmAngle), armWidth/2 * sin(-pi/2 + leftArmAngle));
+    //Start the path
     Path leftArm = Path();
+    //Move to the bottom left shoulder
     leftArm.moveTo(bottomLeftShoulder.dx, bottomLeftShoulder.dy);
-
+    //Draw armpit
     leftArm.quadraticBezierTo(getXIntersect(bottomLeftShoulder, leftInsideArmBase, leftInsideArmBase + Offset(armLength * cos(leftArmAngle), armLength * sin(leftArmAngle))), bottomLeftShoulder.dy, leftInsideArmBase.dx, leftInsideArmBase.dy);
-
+    //Draw inside arm
     leftArm.relativeLineTo(armLength * cos(leftArmAngle), armLength * sin(leftArmAngle));
-    leftArm.relativeArcToPoint(leftOutsideArmBase - leftInsideArmBase, radius: Radius.circular(armWidth /2), clockwise: true);
+    //Draw hand
+    leftArm.relativeArcToPoint(leftOutsideArmBase - leftInsideArmBase, radius: Radius.circular(armWidth /2), clockwise: false);
+    //Draw outside arm
     leftArm.relativeLineTo(-armLength * cos(leftArmAngle), -armLength * sin(leftArmAngle));
+    //Draw shoulder
     leftArm.quadraticBezierTo(getXIntersect(topLeftShoulder, leftOutsideArmBase, leftOutsideArmBase + Offset(armLength * cos(leftArmAngle), armLength * sin(leftArmAngle)) ), topLeftShoulder.dy, topLeftShoulder.dx, topLeftShoulder.dy);
+    //Close arm
     leftArm.relativeLineTo(0, shoulderHeight);
 
+    //Draw stroke using portion of arm (Important when overlaping arm and body)
     Path leftArmStroke = Path();
     leftArmStroke.moveTo(leftInsideArmBase.dx + armLength * .2 * cos(leftArmAngle), leftInsideArmBase.dy + .2 * armLength * sin(leftArmAngle));
     leftArmStroke.relativeLineTo(.8* armLength * cos(leftArmAngle), .8 * armLength * sin(leftArmAngle));
-    leftArmStroke.relativeArcToPoint(leftOutsideArmBase - leftInsideArmBase, radius: Radius.circular(armWidth /2), clockwise: true);
+    leftArmStroke.relativeArcToPoint(leftOutsideArmBase - leftInsideArmBase, radius: Radius.circular(armWidth /2), clockwise: false);
     leftArmStroke.relativeLineTo(-0.8 * armLength * cos(leftArmAngle), -0.8 * armLength * sin(leftArmAngle));
 
+    Offset leftHand = leftInsideArmBase + Offset(armLength * cos(leftArmAngle), armLength * sin(leftArmAngle)) + (leftOutsideArmBase - leftInsideArmBase)/2 + Offset(15 * cos(leftArmAngle), 15 * sin(leftArmAngle));
 
 
+    //Get right hand angle
+    double rightArmAngle = signal.right.handPositionAngle + pi;
+    //Calculate rotation point and base shoulder points
+    Offset topRightShoulder = Offset(size.width/2, size.height/2 + 22)  + Offset(-legGap/2 - legWidth, -torsoLength - shoulderHeight);
+    Offset bottomRightShoulder = Offset(size.width/2, size.height/2 + 22)  + Offset(-legGap/2 - legWidth, -torsoLength);
+    Offset rightRotationPoint = (bottomRightShoulder) + Offset(-shoulderHeight/2 - 5 , -shoulderHeight/2);
+    //Calculate base arm points by rotating as necessary
+    Offset rightArmBase = rightRotationPoint + Offset(2*shoulderHeight/3 * cos(rightArmAngle), 2*shoulderHeight/3 * sin(rightArmAngle));
+    Offset rightInsideArmBase = rightArmBase + Offset(armWidth/2 * cos(-pi/2 + rightArmAngle), armWidth/2 * sin(-pi/2 + rightArmAngle));
+    Offset rightOutsideArmBase = rightArmBase + Offset(armWidth/2 * cos(pi/2 + rightArmAngle), armWidth/2 * sin(pi/2 + rightArmAngle));
+    //Start the path
+    Path rightArm = Path();
+    //Move to the bottom right shoulder
+    rightArm.moveTo(bottomRightShoulder.dx, bottomRightShoulder.dy);
+    //Draw right armpit
+    rightArm.quadraticBezierTo(getXIntersect(bottomRightShoulder, rightInsideArmBase, rightInsideArmBase + Offset(armLength * cos(rightArmAngle), armLength * sin(rightArmAngle))), bottomRightShoulder.dy, rightInsideArmBase.dx, rightInsideArmBase.dy);
+    //Draw right inside arm
+    rightArm.relativeLineTo(armLength * cos(rightArmAngle), armLength * sin(rightArmAngle));
+    //Draw hand
+    rightArm.relativeArcToPoint(rightOutsideArmBase - rightInsideArmBase, radius: Radius.circular(armWidth /2), clockwise: true);
+    //Draw right outside arm
+    rightArm.relativeLineTo(-armLength * cos(rightArmAngle), -armLength * sin(rightArmAngle));
+    //Draw right shoulder
+    rightArm.quadraticBezierTo(getXIntersect(topRightShoulder, rightOutsideArmBase, rightOutsideArmBase + Offset(armLength * cos(rightArmAngle), armLength * sin(rightArmAngle)) ), topRightShoulder.dy, topRightShoulder.dx, topRightShoulder.dy);
+    //Close arm
+    rightArm.relativeLineTo(0, shoulderHeight);
+    //Draw stroke using portion of arm (Important when overlaping arm and body)
+    Path rightArmStroke = Path();
+    rightArmStroke.moveTo(rightInsideArmBase.dx + armLength * .2 * cos(rightArmAngle), rightInsideArmBase.dy + .2 * armLength * sin(rightArmAngle));
+    rightArmStroke.relativeLineTo(.8* armLength * cos(rightArmAngle), .8 * armLength * sin(rightArmAngle));
+    rightArmStroke.relativeArcToPoint(rightOutsideArmBase - rightInsideArmBase, radius: Radius.circular(armWidth /2), clockwise: true);
+    rightArmStroke.relativeLineTo(-0.8 * armLength * cos(rightArmAngle), -0.8 * armLength * sin(rightArmAngle));
 
+    Offset rightHand = rightInsideArmBase + Offset(armLength * cos(rightArmAngle), armLength * sin(rightArmAngle)) + (rightOutsideArmBase - rightInsideArmBase)/2 + Offset(15 * cos(rightArmAngle), 15 * sin(rightArmAngle));
 
-
+    //Actually Draw arms to canvas
     Paint strokePaint = Paint();
 
     strokePaint.strokeWidth =  3;
     strokePaint.color = Colors.white;
     strokePaint.style = PaintingStyle.stroke;
+
+    Paint flagMainStroke = Paint();
+    flagMainStroke.strokeWidth =  2;
+    flagMainStroke.color = Colors.red;
+    flagMainStroke.style = PaintingStyle.stroke;
+    flagMainStroke.strokeJoin = StrokeJoin.round;
+
+    Paint flagOuterStroke = Paint();
+    flagOuterStroke.strokeWidth =  4;
+    flagOuterStroke.color = Colors.white;
+    flagOuterStroke.style = PaintingStyle.stroke;
+
+    Paint flagMainFill = Paint();
+    flagMainFill.color = Colors.red;
+    flagMainFill.style = PaintingStyle.fill;
+
+    Paint flagBaseFill = Paint();
+    flagBaseFill.color = Colors.white;
+    flagBaseFill.style = PaintingStyle.fill;
 
     canvas.drawPath(rightArm, personFill);
     canvas.drawPath(rightArmStroke, strokePaint);
@@ -145,6 +180,63 @@ class SimpleSignalPainter extends CustomPainter {
     canvas.drawPath(leftArm, personFill);
     canvas.drawPath(leftArmStroke, strokePaint);
     canvas.drawPath(leftArmStroke, personFill);
+
+    //Draw Right Flag
+    Path rightFlagPath = Path();
+    //Move to hand location
+    rightFlagPath.moveTo(rightHand.dx, rightHand.dy);
+    //Draw main box
+    rightFlagPath.relativeLineTo(50 * cos(rightArmAngle), 50 * sin(rightArmAngle));
+    rightFlagPath.relativeLineTo(50 * cos(rightArmAngle - pi/2), 50 * sin(rightArmAngle - pi/2));
+    rightFlagPath.relativeLineTo(50 * cos(rightArmAngle + pi), 50 * sin(rightArmAngle + pi));
+    rightFlagPath.relativeLineTo(50 * cos(rightArmAngle - 1.5 * pi), 50 * sin(rightArmAngle - 1.5 * pi));
+    //Close the path so it has nice rounded edges
+    rightFlagPath.close();
+    //Stroke with white
+    canvas.drawPath(rightFlagPath, flagOuterStroke);
+    //Fill with white
+    canvas.drawPath(rightFlagPath, flagBaseFill);
+    //Stoke with red
+    canvas.drawPath(rightFlagPath, flagMainStroke);
+
+    //Draw the triangle inside of the flag
+    Path rightFlagInnerShapePath = Path();
+    rightFlagInnerShapePath.moveTo(rightHand.dx, rightHand.dy);
+    rightFlagInnerShapePath.relativeLineTo(-50 * cos(rightArmAngle - 1.5 * pi), -50 * sin(rightArmAngle - 1.5 * pi));
+    rightFlagInnerShapePath.relativeLineTo(-50 * cos(rightArmAngle + pi), -50 * sin(rightArmAngle + pi));
+    rightFlagInnerShapePath.lineTo(rightHand.dx, rightHand.dy);
+    //Fill Triangle with red
+    canvas.drawPath(rightFlagInnerShapePath, flagMainFill);
+
+    //Draw left Flag
+    Path leftFlagPath = Path();
+    //Move to hand location
+    leftFlagPath.moveTo(leftHand.dx, leftHand.dy);
+    //Draw main box
+    leftFlagPath.relativeLineTo(50 * cos(leftArmAngle), 50 * sin(leftArmAngle));
+    leftFlagPath.relativeLineTo(50 * cos(leftArmAngle + pi/2), 50 * sin(leftArmAngle + pi/2));
+    leftFlagPath.relativeLineTo(50 * cos(leftArmAngle + pi), 50 * sin(leftArmAngle + pi));
+    leftFlagPath.relativeLineTo(50 * cos(leftArmAngle + 1.5 * pi), 50 * sin(leftArmAngle + 1.5 * pi));
+    //Close the path so it has nice rounded edges
+    leftFlagPath.close();
+    //Stroke with white
+    canvas.drawPath(leftFlagPath, flagOuterStroke);
+    //Fill with white
+    canvas.drawPath(leftFlagPath, flagBaseFill);
+    //Stoke with red
+    canvas.drawPath(leftFlagPath, flagMainStroke);
+
+    //Draw the triangle inside of the flag
+    Path leftFlagInnerShapePath = Path();
+    leftFlagInnerShapePath.moveTo(leftHand.dx, leftHand.dy);
+    leftFlagInnerShapePath.relativeLineTo(-50 * cos(leftArmAngle + 1.5 * pi), -50 * sin(leftArmAngle + 1.5 * pi));
+    leftFlagInnerShapePath.relativeLineTo(-50 * cos(leftArmAngle + pi), -50 * sin(leftArmAngle + pi));
+    leftFlagInnerShapePath.lineTo(leftHand.dx, leftHand.dy);
+    //Fill Triangle with red
+    canvas.drawPath(leftFlagInnerShapePath, flagMainFill);
+
+
+
 
 
   }
@@ -156,7 +248,12 @@ class SimpleSignalPainter extends CustomPainter {
 
   double getXIntersect(Offset shoulderPoint, Offset point1, Offset point2)
   {
-    double m = (point1.dy - point2.dy)/(point1.dx - point2.dx);
+    double divisor = (point1.dx - point2.dx);
+    if(divisor == 0)
+    {
+      divisor = 0.000001;
+    }
+    double? m = (point1.dy - point2.dy)/divisor;
 
     if(m < 0)
     {
