@@ -2,13 +2,13 @@ import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:semaphore/classes/simple_signal.dart';
-import 'package:semaphore/enum/hand_position.dart';
+import '../classes/angle_signal.dart';
 
-class SimpleSignalPainter extends CustomPainter {
-  final SimpleSignal signal;
 
-  SimpleSignalPainter(this.signal);
+class AngleSignalPainter extends CustomPainter {
+  final AngleSignal signal;
+
+  AngleSignalPainter(this.signal);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -74,7 +74,7 @@ class SimpleSignalPainter extends CustomPainter {
     canvas.drawPath(path, personFill);
 
     //Get left hand angle
-    double leftArmAngle = signal.left.handPositionAngle + pi;
+    double leftArmAngle = signal.left + pi;
 
     //Calculate rotation point and base shoulder points
     Offset topLeftShoulder = Offset(size.width/2, size.height/2 + 22)  - Offset(-legGap/2 - legWidth, torsoLength + shoulderHeight);
@@ -112,7 +112,7 @@ class SimpleSignalPainter extends CustomPainter {
 
 
     //Get right hand angle
-    double rightArmAngle = signal.right.handPositionAngle + pi;
+    double rightArmAngle = signal.right + pi;
     //Calculate rotation point and base shoulder points
     Offset topRightShoulder = Offset(size.width/2, size.height/2 + 22)  + Offset(-legGap/2 - legWidth, -torsoLength - shoulderHeight);
     Offset bottomRightShoulder = Offset(size.width/2, size.height/2 + 22)  + Offset(-legGap/2 - legWidth, -torsoLength);
@@ -242,7 +242,7 @@ class SimpleSignalPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return oldDelegate is! SimpleSignalPainter && signal != (oldDelegate as SimpleSignalPainter).signal;
+    return oldDelegate is! AngleSignalPainter && signal != (oldDelegate as AngleSignalPainter).signal;
   }
 
   double getXIntersect(Offset shoulderPoint, Offset point1, Offset point2)

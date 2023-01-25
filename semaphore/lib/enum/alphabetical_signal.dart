@@ -32,7 +32,8 @@ enum AlphabeticalSignal {
   w,
   x,
   y,
-  z
+  z,
+  eow
 }
 
 extension AphabeticalSignalExt on AlphabeticalSignal {
@@ -91,6 +92,8 @@ extension AphabeticalSignalExt on AlphabeticalSignal {
         return SimpleSignal(type: SignalType.alphabetical, left: HandPosition.left, right: HandPosition.rightUp);
       case AlphabeticalSignal.z:
         return SimpleSignal(type: SignalType.alphabetical, left: HandPosition.left, right: HandPosition.leftDown);
+      case AlphabeticalSignal.eow:
+        return SimpleSignal(type: SignalType.alphabetical, left: HandPosition.down, right: HandPosition.down);
     }
   }
 }
