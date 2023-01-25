@@ -16,29 +16,29 @@ extension HandPositionExt on HandPosition {
     double angleDegrees;
     switch (this) {
       case HandPosition.leftDown:
-        angleDegrees = 0;
+        angleDegrees = -135;
         break;
       case HandPosition.left:
-        angleDegrees = 0;
+        angleDegrees = 180;
         break;
       case HandPosition.leftUp:
-        angleDegrees = 0;
+        angleDegrees = 135;
         break;
       case HandPosition.up:
-        angleDegrees = 0;
+        angleDegrees = 90;
         break;
       case HandPosition.rightUp:
-        angleDegrees = 0;
+        angleDegrees = 45;
         break;
       case HandPosition.right:
         angleDegrees = 0;
         break;
       case HandPosition.rightDown:
-        angleDegrees = 0;
+        angleDegrees = -45;
         break;
       case HandPosition.down:
       default:
-        angleDegrees = 0;
+        angleDegrees = -90;
     }
     return angleDegrees * pi / 180;
   }
