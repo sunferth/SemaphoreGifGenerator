@@ -21,7 +21,13 @@ class SimpleSignalPainter extends CustomPainter {
     double armWidth = 22;
     double shoulderHeight = 23;
 
-    
+
+    Paint background = Paint();
+    background.style = PaintingStyle.fill;
+    background.color = Colors.transparent;
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), background);
+
+
     Paint personFill = Paint();
     personFill.style = PaintingStyle.fill;
     personFill.color = Colors.black;

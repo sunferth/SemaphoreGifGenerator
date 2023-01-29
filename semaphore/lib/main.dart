@@ -1,9 +1,13 @@
 import 'dart:math';
+import 'dart:ui';
+import 'package:flutter/foundation.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:semaphore/data/bloc/TestEvent.dart';
 import 'package:semaphore/enum/alphabetical_signal.dart';
+import 'package:semaphore/enum/animation_manager.dart';
+import 'package:semaphore/enum/hand_position.dart';
 import 'package:semaphore/widget/AngleSignalPainter.dart';
 import 'package:semaphore/widget/SimpleSignalPainter.dart';
 
@@ -11,6 +15,8 @@ import 'classes/angle_signal.dart';
 import 'data/bloc/TestBloc.dart';
 import 'data/bloc/TestState.dart';
 import 'enum/signal_type.dart';
+import 'package:image/image.dart' as img;
+
 
 void main() {
   runApp(const MyApp());
@@ -22,130 +28,39 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+
+    TestBloc bloc = TestBloc();
+
+    AnimationManager manager = AnimationManager(tweenTime: 0.5, fps: 20, waitTime: 0.5, width: 250, height: 250, bloc: bloc);
+    manager.generateAnimation([
+      AngleSignal(type: SignalType.alphabetical, left: AlphabeticalSignal.a.signal.left.handPositionAngle, right: AlphabeticalSignal.a.signal.right.handPositionAngle),
+      AngleSignal(type: SignalType.alphabetical, left: AlphabeticalSignal.l.signal.left.handPositionAngle, right: AlphabeticalSignal.l.signal.right.handPositionAngle),
+      AngleSignal(type: SignalType.alphabetical, left: AlphabeticalSignal.m.signal.left.handPositionAngle, right: AlphabeticalSignal.m.signal.right.handPositionAngle),
+      AngleSignal(type: SignalType.alphabetical, left: AlphabeticalSignal.o.signal.left.handPositionAngle, right: AlphabeticalSignal.o.signal.right.handPositionAngle),
+      AngleSignal(type: SignalType.alphabetical, left: AlphabeticalSignal.s.signal.left.handPositionAngle, right: AlphabeticalSignal.s.signal.right.handPositionAngle),
+      AngleSignal(type: SignalType.alphabetical, left: AlphabeticalSignal.t.signal.left.handPositionAngle, right: AlphabeticalSignal.t.signal.right.handPositionAngle),
+      AngleSignal(type: SignalType.alphabetical, left: -110/180 * pi, right: -110/180 * pi),
+      AngleSignal(type: SignalType.alphabetical, left: AlphabeticalSignal.d.signal.left.handPositionAngle, right: AlphabeticalSignal.d.signal.right.handPositionAngle),
+      AngleSignal(type: SignalType.alphabetical, left: AlphabeticalSignal.o.signal.left.handPositionAngle, right: AlphabeticalSignal.o.signal.right.handPositionAngle),
+      AngleSignal(type: SignalType.alphabetical, left: AlphabeticalSignal.n.signal.left.handPositionAngle, right: AlphabeticalSignal.n.signal.right.handPositionAngle),
+      AngleSignal(type: SignalType.alphabetical, left: AlphabeticalSignal.e.signal.left.handPositionAngle, right: AlphabeticalSignal.e.signal.right.handPositionAngle),
+      AngleSignal(type: SignalType.alphabetical, left: -110/180 * pi, right: -110/180 * pi),
+      AngleSignal(type: SignalType.alphabetical, left: -110/180 * pi, right: -110/180 * pi),
+    ]);
+
     return MaterialApp(
         home: Scaffold(
       body: MultiBlocProvider(providers: [
-          BlocProvider<TestBloc>(create: (_) => TestBloc())
+          BlocProvider<TestBloc>(create: (_) => bloc)
         ], child: Builder(
           builder: (context) {
             return BlocBuilder<TestBloc, TestState>(
             builder: (context, state){
               return Column(
-                children: [
-                  SizedBox(height: 100,),
-                  Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    Container(
-                        child: Center(
-                            child: Container(
-                              width: 250,
-                              height: 250,
-                              child: Transform.scale(scale: .7, child: CustomPaint(
-                                painter: SimpleSignalPainter(AlphabeticalSignal.a.signal),
-                              )),
-                            ))),
-                    Container(
-                        child: Center(
-                            child: Container(
-                              width: 250,
-                              height: 250,
-                              child: Transform.scale(scale: .7, child: CustomPaint(
-                                painter: SimpleSignalPainter(AlphabeticalSignal.l.signal),
-                              )),
-                            ))),
-                    Container(
-                        child: Center(
-                            child: Container(
-                              width: 250,
-                              height: 250,
-                              child: Transform.scale(scale: .7, child: CustomPaint(
-                                painter: SimpleSignalPainter(AlphabeticalSignal.m.signal),
-                              )),
-                            ))),
-                    Container(
-                        child: Center(
-                            child: Container(
-                              width: 250,
-                              height: 250,
-                              child: Transform.scale(scale: .7, child: CustomPaint(
-                                painter: SimpleSignalPainter(AlphabeticalSignal.o.signal),
-                              )),
-                            ))),
-                    Container(
-                        child: Center(
-                            child: Container(
-                              width: 250,
-                              height: 250,
-                              child: Transform.scale(scale: .7, child: CustomPaint(
-                                painter: SimpleSignalPainter(AlphabeticalSignal.s.signal),
-                              )),
-                            ))),
-                    Container(
-                        child: Center(
-                            child: Container(
-                              width: 250,
-                              height: 250,
-                              child: Transform.scale(scale: .7, child: CustomPaint(
-                                painter: SimpleSignalPainter(AlphabeticalSignal.t.signal),
-                              )),
-                            ))),
-                    Container(
-                        child: Center(
-                            child: Container(
-                              width: 250,
-                              height: 250,
-                              child: Transform.scale(scale: .7, child: CustomPaint(
-                                painter: AngleSignalPainter(AngleSignal(type: SignalType.endOfWord, left: -83/180 * pi, right: -97/180 * pi )),
-                              )),
-                            ))),
-                  ],),
-                  Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    Container(
-                        child: Center(
-                            child: Container(
-                              width: 250,
-                              height: 250,
-                              child: Transform.scale(scale: .7, child: CustomPaint(
-                                painter: SimpleSignalPainter(AlphabeticalSignal.d.signal),
-                              )),
-                            ))),
-                    Container(
-                        child: Center(
-                            child: Container(
-                              width: 250,
-                              height: 250,
-                              child: Transform.scale(scale: .7, child: CustomPaint(
-                                painter: SimpleSignalPainter(AlphabeticalSignal.o.signal),
-                              )),
-                            ))),
-                    Container(
-                        child: Center(
-                            child: Container(
-                              width: 250,
-                              height: 250,
-                              child: Transform.scale(scale: .7, child: CustomPaint(
-                                painter: SimpleSignalPainter(AlphabeticalSignal.n.signal),
-                              )),
-                            ))),
-                    Container(
-                        child: Center(
-                            child: Container(
-                              width: 250,
-                              height: 250,
-                              child: Transform.scale(scale: .7, child: CustomPaint(
-                                painter: SimpleSignalPainter(AlphabeticalSignal.e.signal),
-                              )),
-                            ))),
-                    Container(
-                        child: Center(
-                            child: Container(
-                              width: 250,
-                              height: 250,
-                              child: Transform.scale(scale: .7, child: CustomPaint(
-                                painter: AngleSignalPainter(AngleSignal(type: SignalType.endOfWord, left: -83/180 * pi, right: -97/180 * pi )),
-                              )),
-                            ))),
-                  ],)
-                ],
+                children: state.processing ? [
+                  Text(state.label),
+                  CircularProgressIndicator(value: state.percentProcessing,)
+                ] :[Text("Not Processing")]
               );
             },
       );
