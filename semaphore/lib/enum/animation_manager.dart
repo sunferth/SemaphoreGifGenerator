@@ -11,6 +11,7 @@ import 'package:semaphore/widget/AngleSignalPainter.dart';
 import 'package:image/image.dart' as img;
 import 'package:image/src/util/quantizer.dart';
 import '../data/bloc/TestBloc.dart';
+import 'dart:math';
 
 class AnimationManager{
   double tweenTime;
@@ -36,17 +37,8 @@ class AnimationManager{
     return image;
   }
 
-  Future<img.Image> convertFrame(Image toConvert) async {
-    return img.decodePng(((await toConvert.toByteData(format: ImageByteFormat.png))!.buffer.asUint8List()!))!;
-  }
-
   img.Image convertFrameFromByteData(Uint8List toConvert) {
     return img.decodePng(toConvert)!;
-  }
-
-  Future<img.Image> processFrame(AngleSignal signal) async {
-    Image image = await generateFrame(signal);
-    return await convertFrame(image);
   }
 
   Future<Uint8List> getByteData(AngleSignal signal) async {
@@ -61,7 +53,25 @@ class AnimationManager{
   //TODO check if abs(start - end) < abs(end - start)
   AngleSignal createSignalForTweenFrame(AngleSignal start, AngleSignal end, double proportion)
   {
-    return AngleSignal(type: start.type, left: (end.left - start.left) * proportion + start.left, right: (end.right - start.right) * proportion + start.right);
+    double leftModifier;
+    double rightModifier;
+    if((start.left - end.left).abs() < (end.left - start.left).abs())
+    {
+      leftModifier = (start.left - end.left) * (1 - proportion) + start.left;
+    }
+    else
+    {
+      leftModifier = (end.left - start.left) * proportion + start.left;
+    }
+    if((start.right - end.right).abs() < (end.right - start.right).abs())
+    {
+      rightModifier = (start.right - end.right) * (1 - proportion) + start.right;
+    }
+    else
+    {
+      rightModifier = (end.right - start.right) * proportion + start.right;
+    }
+    return AngleSignal(type: start.type, left: leftModifier, right: rightModifier);
   }
 
   Future<void> downloadToUser(Uint8List toDownload) async {
