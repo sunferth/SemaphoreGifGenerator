@@ -5,10 +5,10 @@ import 'TestState.dart';
 
 class TestBloc extends Bloc<TestEvent, TestState>
 {
-  TestBloc() : super(TestState.init()) {
+  TestBloc() : super(const TestState.init()) {
     on<StartProcessingEvent>(_handleStartProcessingEvent);
     on<StopProcessingEvent>(_handleStopProcessingEvent);
-    on<UpdateProcessingevent>(_handleUpdateProcessingevent);
+    on<UpdateProcessingEvent>(_handleUpdateProcessingEvent);
     on<UpdateImageDataEvent>(_handleUpdateImageDataEvent);
   }
 
@@ -20,8 +20,9 @@ class TestBloc extends Bloc<TestEvent, TestState>
   {
     emit(TestState.of(state, processing: false, label: "", percentProcessing: 0));
   }
-  void _handleUpdateProcessingevent(UpdateProcessingevent event, Emitter<TestState> emit)
+  void _handleUpdateProcessingEvent(UpdateProcessingEvent event, Emitter<TestState> emit)
   {
+    print("Update Event");
     emit(TestState.of(state, processing: true, label: event.label, percentProcessing: event.processingPercent));
   }
   void _handleUpdateImageDataEvent(UpdateImageDataEvent event, Emitter<TestState> emit)

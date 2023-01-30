@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:isolate';
 import 'dart:typed_data';
 import 'dart:ui';
 import 'package:file_saver/file_saver.dart';
@@ -16,9 +18,8 @@ class AnimationManager{
   double waitTime;
   int width;
   int height;
-  TestBloc bloc;
 
-  AnimationManager({required this.tweenTime, required this.fps, required this.waitTime, required this.width, required this.height, required this.bloc});
+  AnimationManager({required this.tweenTime, required this.fps, required this.waitTime, required this.width, required this.height});
 
   img.GifEncoder setupEncoder(){
     img.GifEncoder encoder = img.GifEncoder();
@@ -32,7 +33,6 @@ class AnimationManager{
     AngleSignalPainter(AngleSignal(type: SignalType.alphabetical, left: signal.left, right: signal.right)).paint(canvas, Size(width.toDouble(), height.toDouble()));
     Picture pic = recorder.endRecording();
     Image image = await pic.toImage(width, height);
-    print("generated");
     return image;
   }
 
@@ -40,9 +40,18 @@ class AnimationManager{
     return img.decodePng(((await toConvert.toByteData(format: ImageByteFormat.png))!.buffer.asUint8List()!))!;
   }
 
+  img.Image convertFrameFromByteData(Uint8List toConvert) {
+    return img.decodePng(toConvert)!;
+  }
+
   Future<img.Image> processFrame(AngleSignal signal) async {
     Image image = await generateFrame(signal);
     return await convertFrame(image);
+  }
+
+  Future<Uint8List> getByteData(AngleSignal signal) async {
+    Image image = await generateFrame(signal);
+    return ((await image.toByteData(format: ImageByteFormat.png))!.buffer.asUint8List()!);
   }
 
   void AddFrame(img.Image image, img.GifEncoder encoder) {
@@ -59,8 +68,49 @@ class AnimationManager{
     await FileSaver.instance.saveFile("TestGif", toDownload, ".gif", mimeType: MimeType.GIF);
   }
 
-  Future<Uint8List> generateAnimation(List<AngleSignal> signals) async{
-    bloc.add(StartProcessingEvent());
+  Future<List<Uint8List?>> generateSignalImages(List<AngleSignal> signals) async
+  {
+    List<Uint8List?> signalPics = List.generate(signals.length, (index) => null);
+
+    List<Future<Uint8List>> signalGenerationFutures = [];
+
+    for(int i = 0; i < signals.length; i++)
+    {
+      signalGenerationFutures.add(getByteData(signals[i])..then((value){
+        signalPics[i] = value;
+      }));
+    }
+
+    await Future.wait(signalGenerationFutures);
+
+    return signalPics;
+  }
+
+  Future<List<Uint8List?>> generateTweenFrames(List<AngleSignal> signals)
+  async {
+
+    List<Uint8List?> tweenFrames = List.generate((signals.length - 1) * ((tweenTime * fps).ceil()), (index) => null);
+    List<Future<Uint8List>> tweenGenerationFutures = [];
+
+    for(int i = 0; i < signals.length - 1; i++)
+    {
+      for(int j = 0; j < (tweenTime * fps).ceil(); j++)
+      {
+        double proportion = j / (tweenTime * fps).ceil();
+        AngleSignal signal = createSignalForTweenFrame(signals[i], signals[i  + 1], proportion);
+        tweenGenerationFutures.add(getByteData(signal)..then((value){
+          tweenFrames[i * (tweenTime * fps).ceil() + j] = value;
+        }));
+      }
+    }
+
+    await Future.wait(tweenGenerationFutures);
+
+    return tweenFrames;
+  }
+
+  Future<Uint8List> generateAnimation(List<AngleSignal> signals, List<Uint8List?> signalImages, List<Uint8List?> tweenFrames, SendPort port) async{
+
       img.GifEncoder encoder = setupEncoder();
       Uint8List data = Uint8List.fromList([]);
 
@@ -70,55 +120,25 @@ class AnimationManager{
 
       int addedFrames = 0;
 
-      List<img.Image?> signalPics = List.generate(signals.length, (index) => null);
-
-      int signalPicsFinished = 0;
-
-      bloc.add(UpdateProcessingevent("Generating Key Frames", 0));
-
-    List<Future<img.Image?>> signalGenerationFutures = [];
-
+      port.send({"message": "Converting Key Frames", "value": 0});
+      List<img.Image> signalPics = [];
       for(int i = 0; i < signals.length; i++)
       {
-        signalGenerationFutures.add(processFrame(signals[i]).then((value){
-          signalPics[i] = value;
-        }));
+        port.send({"message": "Converting Key Frames", "value": (i + 1)/signals.length});
+        signalPics.add(convertFrameFromByteData(signalImages[i]!));
       }
 
-      bloc.add(UpdateProcessingevent("Generating Tween Frames", 0));
-
-      List<img.Image?> tweenPics = List.generate((signals.length - 1) * tweenLength, (index) => null);
-
-      int tweenPicsFinished = 0;
-
-
-
-      List<Future<img.Image?>> tweenGenerationFutures = [];
-
-      for(int i = 0; i < signals.length - 1; i++)
+      port.send({"message": "Converting Tween Frames", "value": 0});
+      List<img.Image> tweenPics = [];
+      for(int i = 0; i < tweenFrames.length; i++)
       {
-        for(int j = 0; j < tweenLength; j++)
-        {
-          double proportion = j / tweenLength;
-          AngleSignal signal = createSignalForTweenFrame(signals[i], signals[i  + 1], proportion);
-          tweenGenerationFutures.add(processFrame(signal).then((value){
-            tweenPics[i * tweenLength + j] = value;
-          }));
-          // generateFrame(signal).then((value) {
-          //   tweenGenerationFutures.add(convertFrame(value).then((converted){
-          //     tweenPics[i * tweenLength + j] = converted;
-          //     tweenPicsFinished++;
-          //     bloc.add(UpdateProcessingevent("Generating Tween Frames", tweenPicsFinished/((signals.length - 1) * tweenLength)));
-          //   }));
-          // });
-        }
+        port.send({"message": "Converting Tween Frames", "value": (i + 1)/tweenFrames.length});
+        tweenPics.add(convertFrameFromByteData(tweenFrames[i]!));
       }
-
-      await Future.wait([...signalGenerationFutures, ...tweenGenerationFutures]);
 
       List<img.Image?> frames = [];
 
-      bloc.add(UpdateProcessingevent("Generating Frame List", 50));
+      port.send({"message": "Generating Frame List", "value": 50});
 
       for(int i = 0; i < signals.length - 1; i++)
       {
@@ -129,20 +149,19 @@ class AnimationManager{
         }
       }
 
-      bloc.add(UpdateProcessingevent("Adding Frames", 0));
+      port.send({"message": "Adding Frames", "value": 0});
 
       for(int i = 0; i < frames.length; i++)
       {
         encoder.addFrame(frames[i]!, duration: (100/fps).ceil());
         addedFrames++;
-        bloc.add(UpdateProcessingevent("Adding Frames",addedFrames/frames.length));
+        port.send({"message": "Adding Frames", "value": addedFrames/frames.length});
       }
 
       data =  encoder.finish()!;
 
-      downloadToUser(data);
+      port.send({"message": "Done", "value": data});
 
-      bloc.add(StopProcessingEvent());
 
       return data;
     }

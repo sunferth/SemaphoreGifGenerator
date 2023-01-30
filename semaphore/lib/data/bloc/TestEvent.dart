@@ -8,11 +8,11 @@ abstract class TestEvent {}
 
 class StartProcessingEvent extends TestEvent {}
 
-class UpdateProcessingevent extends TestEvent {
+class UpdateProcessingEvent extends TestEvent {
   String label;
   double processingPercent;
 
-  UpdateProcessingevent(this.label, this.processingPercent);
+  UpdateProcessingEvent(this.label, this.processingPercent);
 }
 
 class StopProcessingEvent extends TestEvent {}
