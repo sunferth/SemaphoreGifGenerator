@@ -1,6 +1,4 @@
-import 'dart:html';
 import 'dart:math';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../classes/angle_signal.dart';

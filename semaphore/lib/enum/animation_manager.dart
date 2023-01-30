@@ -1,7 +1,6 @@
 import 'dart:typed_data';
-import 'dart:html';
 import 'dart:ui';
-
+import 'package:file_saver/file_saver.dart';
 import 'package:flutter/foundation.dart';
 import 'package:semaphore/classes/angle_signal.dart';
 import 'package:semaphore/data/bloc/TestEvent.dart';
@@ -9,7 +8,6 @@ import 'package:semaphore/enum/signal_type.dart';
 import 'package:semaphore/widget/AngleSignalPainter.dart';
 import 'package:image/image.dart' as img;
 import 'package:image/src/util/quantizer.dart';
-
 import '../data/bloc/TestBloc.dart';
 
 class AnimationManager{
@@ -57,19 +55,8 @@ class AnimationManager{
     return AngleSignal(type: start.type, left: (end.left - start.left) * proportion + start.left, right: (end.right - start.right) * proportion + start.right);
   }
 
-  void downloadToUser(Uint8List toDownload) {
-    final blob = Blob([toDownload]);
-    final url = Url.createObjectUrlFromBlob(blob);
-    final anchor = document.createElement('a') as AnchorElement
-      ..href = url
-      ..style.display = 'none'
-      ..download = "test.gif";
-    document.body!.children.add(anchor);
-
-    anchor.click();
-
-    document.body!.children.remove(anchor);
-    Url.revokeObjectUrl(url);
+  Future<void> downloadToUser(Uint8List toDownload) async {
+    await FileSaver.instance.saveFile("TestGif", toDownload, ".gif", mimeType: MimeType.GIF);
   }
 
   Future<Uint8List> generateAnimation(List<AngleSignal> signals) async{
