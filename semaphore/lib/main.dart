@@ -11,12 +11,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:semaphore/data/bloc/TestEvent.dart';
 import 'package:semaphore/enum/hand_position.dart';
 import 'package:semaphore/widget/AngleSignalPainter.dart';
+import 'package:semaphore/widget/main_view.dart';
 
 import 'classes/angle_signal.dart';
 import 'data/bloc/TestBloc.dart';
 import 'data/bloc/TestState.dart';
 import 'enum/alphabetical_signal.dart';
-import 'enum/animation_manager.dart';
+import 'data/animation_manager.dart';
 import 'enum/signal_type.dart';
 
 
@@ -25,155 +26,27 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
-  MyApp({super.key}) {
-    startAnimationGeneration(signals, manager, bloc);
-  }
-
-  static void generateAnimation(SendPort sendPort) async {
-
-    ReceivePort receivePort = ReceivePort();
-    sendPort.send({"message":"sender", "value":receivePort.sendPort});
-
-    Completer<List<dynamic>> c1 = Completer();
-
-    receivePort.listen((message) {
-      print("From main: $message");
-
-      Map<String, dynamic> messageMap = message;
-      if(message["message"] == "data")
-      {
-        c1.complete(messageMap["value"]);
-      }
-    });
-
-    c1.future.then((value){
-      sendPort.send({"message": "Starting processing", "value": .5});
-      value[3].generateAnimation(value[0], value[1], value[2], sendPort);
-    });
-
-
-  }
+  MyApp({super.key});
 
   TestBloc bloc = TestBloc();
-  List<AngleSignal> signals = [
-    AngleSignal(type: SignalType.alphabetical,
-        left: AlphabeticalSignal.a.signal.left.handPositionAngle,
-        right: AlphabeticalSignal.a.signal.right.handPositionAngle),
-    AngleSignal(type: SignalType.alphabetical,
-        left: AlphabeticalSignal.l.signal.left.handPositionAngle,
-        right: AlphabeticalSignal.l.signal.right.handPositionAngle),
-    AngleSignal(type: SignalType.alphabetical,
-        left: AlphabeticalSignal.m.signal.left.handPositionAngle,
-        right: AlphabeticalSignal.m.signal.right.handPositionAngle),
-    AngleSignal(type: SignalType.alphabetical,
-        left: AlphabeticalSignal.o.signal.left.handPositionAngle,
-        right: AlphabeticalSignal.o.signal.right.handPositionAngle),
-    AngleSignal(type: SignalType.alphabetical,
-        left: AlphabeticalSignal.s.signal.left.handPositionAngle,
-        right: AlphabeticalSignal.s.signal.right.handPositionAngle),
-    AngleSignal(type: SignalType.alphabetical,
-        left: AlphabeticalSignal.t.signal.left.handPositionAngle,
-        right: AlphabeticalSignal.t.signal.right.handPositionAngle),
-    AngleSignal(type: SignalType.alphabetical,
-        left: -80 / 180 * pi,
-        right: -100 / 180 * pi),
-    AngleSignal(type: SignalType.alphabetical,
-        left: AlphabeticalSignal.d.signal.left.handPositionAngle,
-        right: AlphabeticalSignal.d.signal.right.handPositionAngle),
-    AngleSignal(type: SignalType.alphabetical,
-        left: AlphabeticalSignal.o.signal.left.handPositionAngle,
-        right: AlphabeticalSignal.o.signal.right.handPositionAngle),
-    AngleSignal(type: SignalType.alphabetical,
-        left: AlphabeticalSignal.n.signal.left.handPositionAngle,
-        right: AlphabeticalSignal.n.signal.right.handPositionAngle),
-    AngleSignal(type: SignalType.alphabetical,
-        left: AlphabeticalSignal.e.signal.left.handPositionAngle,
-        right: AlphabeticalSignal.e.signal.right.handPositionAngle),
-    AngleSignal(type: SignalType.alphabetical,
-        left: -80 / 180 * pi,
-        right: -100 / 180 * pi),
-    AngleSignal(type: SignalType.alphabetical,
-        left: -80 / 180 * pi,
-        right: -100 / 180 * pi),
-  ];
-
-
-  AnimationManager manager = AnimationManager(tweenTime: 0.5,
-      fps: 20,
-      waitTime: 0.5,
-      width: 250,
-      height: 250);
-
-
-
-  void startAnimationGeneration(List<AngleSignal> signals, AnimationManager manager, TestBloc bloc) async {
-    ReceivePort port = ReceivePort();
-
-    List<Uint8List?> signalImages = await manager.generateSignalImages(signals);
-    List<Uint8List?> tweenImages = await manager.generateTweenFrames(signals);
-
-    Completer<SendPort> sendPortCompleter = Completer();
-
-    port.listen((message) {
-      print("From isolate: $message");
-
-      Map<String, dynamic> messageMap = message;
-      if(message["message"] == "sender")
-      {
-        sendPortCompleter.complete(messageMap["value"]);
-      }
-      else if(message["message"] != "Done")
-      {
-        bloc.add(UpdateProcessingEvent(message["message"], message["value"]));
-      }
-      else
-      {
-        FileSaver.instance.saveFile("Test", message["value"], ".gif");
-        bloc.add(StopProcessingEvent());
-      }
-    });
-
-     List<dynamic> toSend = [signals, signalImages, tweenImages, manager];
-     sendPortCompleter.future.then((value) => value.send({"message":"data", "value":toSend}));
-
-    bloc.add(UpdateProcessingEvent("Generating Images", 1));
-
-    SendPort sendPort = port.sendPort;
-
-    await Isolate.spawn<SendPort>(generateAnimation, sendPort);
-  }
 
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    print("redrawing");
-
     return MaterialApp(
         home: Scaffold(
+
             body: MultiBlocProvider(providers: [
               BlocProvider<TestBloc>(create: (_) => bloc)
-            ], child: Builder(
+            ], child: Container(width: double.infinity, height: double.infinity, color: Colors.grey.shade900, child: Builder(
                 builder: (context) {
                   return BlocBuilder<TestBloc, TestState>(
                     builder: (context, state) {
-                      print("redrawing");
-                      return Center(
-                        child: Column(mainAxisAlignment: MainAxisAlignment.center,
-                            children: state.processing ? [
-                              Text(state.label),
-                              CircularProgressIndicator(
-                                value: state.percentProcessing,)
-                            ] : [Container(color: Colors.black, width: 250, height: 250,  child: CustomPaint(painter: AngleSignalPainter(
-                              AngleSignal(type: SignalType.alphabetical,
-                                  left: -80 / 180 * pi,
-                                  right: -100 / 180 * pi),
-                            ),))]
-                        ),
-                      );
+                      return MainView();
                     },
                   );
                 }
-            ))));
+            )))));
   }
 }
 
